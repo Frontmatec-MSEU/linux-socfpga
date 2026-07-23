@@ -1,0 +1,572 @@
+
+#include "socfpga_agilex5.dtsi"
+
+/ {
+	model = "SoCFPGA Agilex5 based iG58M development platform";
+	#address-cells = <2>;
+	#size-cells = <2>;
+
+	aliases {
+		serial0 = &uart0;
+		serial1 = &uart1;
+		ethernet0 = &gmac2;
+		rtc0 = &da9062_rtc;
+	};
+
+	chosen {
+		stdout-path = "serial0:115200n8";
+		bootargs = "console=ttyS0,115200 earlycon panic=-1";
+	};
+
+	iG58m_info {
+		compatible = "iwave,iG58m-info";
+		status = "okay";
+	};
+
+	fpga_ref_clk: ref_clk {
+		compatible = "fixed-clock";
+		#clock-cells = <0>;
+		clock-frequency = <100000000>;
+		clock-output-names = "fpga-ref-clk";
+		};
+
+	gts_transceiver0 {
+		compatible = "intel,gts";
+		phandle = <0x23>;
+	};
+
+    fpga_version@20000000 {
+        compatible = "generic-uio";
+        reg = <0x0 0x20000000 0x0 0x10>;
+        status = "okay";
+    };
+
+	gpio_pmod: gpio@20000020 {
+		status = "okay";
+		compatible = "altr,pio-1.0";
+		reg = <0x0 0x20000020 0x0 0x20>;
+		altr,ngpio = <8>;
+		#gpio-cells = <2>;
+		gpio-controller;
+	};
+
+	gpio_irq_control: gpio@20000040 {
+		status = "okay";
+		compatible = "altr,pio-1.0";
+		reg = <0x0 0x20000040 0x0 0x20>;
+		altr,ngpio = <8>;
+		#gpio-cells = <2>;
+		gpio-controller;
+	};
+
+	gpio_afe_control: gpio@200000a0 {
+		status = "okay";
+		compatible = "altr,pio-1.0";
+		reg = <0x0 0x200000a0 0x0 0x20>;
+		altr,ngpio = <8>;
+		#gpio-cells = <2>;
+		gpio-controller;
+	};
+
+			/* Adding Bridges */
+	fpga_hps2fpgabridge: fpga_bridge@40000000 {
+			compatible = "altr,socfpga-hps2fpga-bridge";
+			reg = <0x40000000 0x40000000>;
+			resets = <&rst SOC2FPGA_RESET>;
+			clocks = <&clkmgr AGILEX5_L4_MAIN_CLK>;
+			status = "okay";
+	};
+
+	fpga_lwhps2fpgabridge: fpga_bridge@20000000{
+			compatible = "altr,socfpga-lwhps2fpga-bridge";
+			reg = <0x20000000 0x20000000>;
+			resets = <&rst LWHPS2FPGA_RESET>;
+			clocks = <&clkmgr AGILEX5_L4_MAIN_CLK>;
+			status = "okay";
+	};
+
+	fpga_fpga2hpsbridge: fpga-bridge@0 {
+			compatible = "altr,socfpga-fpga2hps-bridge";
+			reg = <0x0 0x20000000>;
+			resets = <&rst FPGA2SOC_RESET>;
+			clocks = <&clkmgr AGILEX5_L4_MAIN_CLK>;
+			status = "okay";
+	};
+
+	fpga_fpga2sdram: fpga-bridge@80000000 {
+			compatible = "altr,socfpga-fpga2sdram-bridge";
+			reg = <0x80000000 0x80000000>;
+			resets = <&rst F2SSDRAM0_RESET>;
+			clocks = <&clkmgr AGILEX5_L4_MAIN_CLK>;
+			status = "okay";
+	};
+
+	my_uio_device@1fc00000 {
+		compatible = "generic-uio";
+		reg = <0x0 0x200040 0x0 0x20>; /* Assumes Lightweight HPS2FPGA bridge */
+		interrupt-parent = <0x03>; /* Links to your GIC v3 phandle */
+
+		/* Change 72 to match your actual f2h_irq bit mapping! */
+		interrupts = <0x00 72 0x04>;
+
+		status = "okay";
+	};
+
+	hssiss_0_hssiss {
+		compatible = "intel,hssiss-2.0";
+		reg-names = "sscsr", "usr_csr";
+		reg = <0x0 0x40300000 0x0 0x400000>, <0x0 0x40200000 0x0 0x1000>;
+		reset-mode = "reg";
+		tr-type = <0x23>;
+		phandle = <0x25>;
+	};
+
+	sfp-eth0 {
+		compatible = "altera,sfp-mem";
+		reg-names = "sfp-mem-ctrl";
+		reg = <0x0 0x44040000 0x0 0x1000>;
+		status = "okay";
+		phandle = <0x24>;
+	};
+
+	msgdma_gts_0_eth {
+		compatible = "altr,msgdma-gts-1.0";
+		#address-cells = <0x01>;
+		#size-cells = <0x01>;
+		ranges;
+		if_name = "eth1";
+		tile_chan = <0x00>;
+		hssi_port = <0x00>;
+		monitor_poll_interval = <0x0a>;
+		pma_type = <0x00>;
+		num_channels = <0x01>;
+		interrupt-parent = <0x03>;
+		interrupt-names = "dma0_tx_irq", "dma0_rx_irq";
+		interrupts = <0x00 0x13 0x04 0x00 0x14 0x04>;
+		status = "okay";
+		sfp = <0x24>;
+		fec-type = "no-fec";
+		phy-mode = "10gbase-r";
+		fec-cw-pos-rx = <0x00>;
+		ui-adj-interval = <0xfa>;
+		hssiss = <0x25>;
+		phandle = <0x59>;
+
+		fixed-link {
+			speed = <0x2710>;
+			full-duplex;
+		};
+
+		dma_0 {
+			reg-names = "tx_pref", "tx_csr", "tx_fifo", "rx_pref", "rx_csr", "rx_fifo";
+			reg = <0x45000000 0x20 0x45000020 0x20 0x45000040 0x20 0x45000080 0x20 0x450000a0 0x20 0x450000c0 0x10>;
+			tx-poll-freq = <0x80>;
+			rx-poll-freq = <0x80>;
+			rx-fifo-depth = <0x4000>;
+			tx-fifo-depth = <0x1000>;
+			rx-fifo-almost-full = <0x2000>;
+			rx-fifo-almost-empty = <0x1000>;
+		};
+         };
+
+	bus@20000000 {
+		compatible = "simple-bus";
+		reg = <0x0 0x20000000 0x0 0x1000>, <0x0 0x40000000 0x0 0x7000000>, <0x0 0x50000000 0x0 0x20000>;
+		reg-names = "axi_h2f", "axi_h2f_lw";
+		#address-cells = <0x02>;
+		#size-cells = <0x01>;
+		ranges = <0x00 0x00 0x0 0x20000000 0x1000
+		          0x01 0x40000000 0x0 0x40000000 0x4000000
+		          0x01 0x44040000 0x0 0x44040000 0x10000
+		          0x01 0x44050000 0x0 0x44050000 0x40
+		          0x01 0x45000000 0x0 0x45000000 0x300000
+		          0x01 0x50000000 0x0 0x50000000 0x3000
+		          0x01 0x50010000 0x0 0x50010000 0x3000>;
+		phandle = <0x54>;
+
+		pktgen@81010000 {
+			compatible = "generic-uio";
+			reg = <0x01 0x50000000 0x10000>;
+			reg-names = "pkt_cli";
+			phandle = <0x56>;
+		};
+
+		pktgen@81020000 {
+			compatible = "generic-uio";
+			reg = <0x01 0x50001000 0x10000>;
+			reg-names = "pkt_cli";
+			phandle = <0x57>;
+		};
+
+		packetswitch@81000000 {
+			compatible = "generic-uio";
+			reg = <0x01 0x50010000 0x10000>;
+			reg-names = "packetswitch";
+			phandle = <0x58>;
+		};
+	};
+   };
+
+&gpio0 {
+	status = "okay";
+};
+
+&gpio1 {
+	status = "okay";
+};
+ /*
+&soc {
+    sfp_gpio: gpio@2000100 {
+        compatible = "altr,pio-1.0";
+        reg = <0x2000100 0x20>;
+        gpio-controller;
+        #gpio-cells = <2>;
+    };
+};
+ */
+&i2c0 {
+	status = "okay";
+	clock-frequency = <100000>;
+
+	pmic0: da9062@58 {
+		compatible = "dlg,da9062";
+		reg = <0x58>;
+
+		gpio-controller;
+		#gpio-cells = <2>;
+
+		da9062_rtc: rtc {
+			compatible = "dlg,da9062-rtc";
+			wakeup-source;
+		};
+
+		da9062_wdt: watchdog {
+			compatible = "dlg,da9062-watchdog";
+			status = "okay";
+		};
+
+		da9062_gpio: gpio {
+			compatible = "dlg,da9062-gpio";
+			status = "okay";
+		};
+	};
+
+	eeprom: eeprom@52 {
+		compatible = "atmel,24c04";
+		reg = <0x52>;
+		pagesize = <16>;
+		address-width = <8>;
+		size = <512>;
+	};
+
+	Som_eeprom: eeprom@56 {
+		compatible = "atmel,24mac402";
+		reg = <0x56>;
+		pagesize = <16>;
+		address-width = <8>;
+		size = <512>;
+	};
+
+	i2c_mux: msd9546@71 {
+		compatible = "nxp,pca9546";
+		reg = <0x71>;
+		status = "okay";
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+            i2c_sfp0: i2c@2 {
+                #address-cells = <1>;
+                #size-cells = <0>;
+                reg = <2>;
+
+               sfp0_eeprom: eeprom@50 {
+                    compatible = "atmel,24c02"; /* SFP A0h is effectively a 256-byte 24c02 EEPROM */
+                    reg = <0x50>;
+                };
+            };
+
+            i2c_sfp1: i2c@3 {
+                #address-cells = <1>;
+                #size-cells = <0>;
+                reg = <3>;
+
+                sfp1_eeprom: eeprom@50 {
+                    compatible = "atmel,24c02";
+                    reg = <0x50>;
+                };
+            };
+
+       }; /* mux*/
+ }; /*i2c*/
+
+&spi0 {
+    status = "okay";
+    #address-cells = <1>;
+    #size-cells = <0>;
+	/delete-property/ dmas;
+	/delete-property/ dma-names;
+
+    afe5828@0 {
+        compatible = "rohm,dh2228fv";
+        reg = <0x00>;
+        spi-max-frequency = <10000>;
+    };
+
+    afe5828@1 {
+        compatible = "rohm,dh2228fv";
+        reg = <1>;
+        spi-max-frequency = <10000>;
+    };
+};
+
+&spi1 {
+    status = "okay";
+    #address-cells = <1>;
+    #size-cells = <0>;
+	/delete-property/ dmas;
+	/delete-property/ dma-names;
+
+        tpm@0 {
+			compatible = "st,st33htpm-spi", "tcg,tpm_tis-spi";
+			reg = <0x00>;
+			spi-max-frequency = <1000000>;
+			status = "okay";
+        };
+};
+
+&gmac2 {
+	status = "okay";
+	phy-mode = "rgmii-id";
+	phy-handle = <&emac2_phy0>;
+	mdio {
+		#address-cells = <1>;
+		#size-cells = <0>;
+		compatible = "snps,dwmac-mdio";
+		emac2_phy0: ethernet-phy@3 {
+		   reg = <3>;
+               reset-gpios = <&portb 3 GPIO_ACTIVE_LOW>;
+               reset-assert-us = <10000>;
+               reset-deassert-us = <100000>;
+	           rxc-skew-psec = <1000>;
+	           txc-skew-psec = <1000>;
+	           rxd-skew-psec = <0>;
+	           txd-skew-psec = <0>;
+
+		};
+	};
+};
+
+&mmc {
+	status = "okay";
+	bus-width = <8>;
+	no-1-8-v;
+	cap-sd-highspeed;
+	cap-mmc-highspeed;
+	disable-wp;
+	sd-uhs-sdr50;
+	sdhci-caps = <0x00000000 0x0000c800>;
+	sdhci-caps-mask = <0x00002000 0x0000ff00>;
+	no-sdio;
+	cdns,phy-use-ext-lpbk-dqs = <1>;
+	cdns,phy-use-lpbk-dqs = <1>;
+	cdns,phy-use-phony-dqs = <1>;
+	cdns,phy-use-phony-dqs-cmd = <1>;
+	cdns,phy-io-mask-always-on = <0>;
+	cdns,phy-io-mask-end = <5>;
+	cdns,phy-io-mask-start = <0>;
+	cdns,phy-data-select-oe-end = <1>;
+	cdns,phy-sync-method = <1>;
+	cdns,phy-sw-half-cycle-shift = <0>;
+	cdns,phy-rd-del-sel = <52>;
+	cdns,phy-underrun-suppress = <1>;
+	cdns,phy-gate-cfg-always-on = <1>;
+	cdns,phy-param-dll-bypass-mode = <1>;
+	cdns,phy-param-phase-detect-sel = <2>;
+	cdns,phy-param-dll-start-point = <254>;
+	cdns,phy-read-dqs-cmd-delay = <0>;
+	cdns,phy-clk-wrdqs-delay = <0>;
+	cdns,phy-clk-wr-delay = <0>;
+	cdns,phy-read-dqs-delay = <0>;
+	cdns,phy-phony-dqs-timing = <0>;
+	cdns,hrs09-rddata-en = <1>;
+	cdns,hrs09-rdcmd-en = <1>;
+	cdns,hrs09-extended-wr-mode = <1>;
+	cdns,hrs09-extended-rd-mode = <1>;
+	cdns,hrs10-hcsdclkadj = <3>;
+	cdns,hrs16-wrdata1-sdclk-dly = <0>;
+	cdns,hrs16-wrdata0-sdclk-dly = <0>;
+	cdns,hrs16-wrcmd1-sdclk-dly = <0>;
+	cdns,hrs16-wrcmd0-sdclk-dly = <0>;
+	cdns,hrs16-wrdata1-dly = <0>;
+	cdns,hrs16-wrdata0-dly = <0>;
+	cdns,hrs16-wrcmd1-dly = <0>;
+	cdns,hrs16-wrcmd0-dly = <0>;
+	cdns,hrs07-rw-compensate = <10>;
+	cdns,hrs07-idelay-val = <0>;
+};
+
+&osc1 {
+	clock-frequency = <25000000>;
+};
+
+&uart0 {
+    status = "okay";
+};
+
+&uart1 {
+    status = "okay";
+};
+
+&spi1 {
+    status = "okay";
+};
+
+
+&usb31 {
+	status = "okay";
+	dr_mode = "host";
+    maximum-speed = "super-speed";
+};
+
+&smmu {
+	status = "okay";
+};
+
+&watchdog0 {
+	status = "okay";
+};
+
+&watchdog1 {
+	status = "okay";
+};
+
+&watchdog2 {
+	status = "okay";
+};
+
+&watchdog3 {
+	status = "okay";
+};
+
+&qspi {
+	status = "okay";
+	flash@0 {
+		#address-cells = <1>;
+		#size-cells = <1>;
+		compatible = "micron,mt25qu01g", "jedec,spi-nor";
+		reg = <0>;
+		spi-max-frequency = <100000000>;
+		m25p,fast-read;
+		cdns,page-size = <256>;
+		cdns,block-size = <16>;
+		cdns,read-delay = <2>;
+		cdns,tshsl-ns = <50>;
+		cdns,tsd2d-ns = <50>;
+		cdns,tchsh-ns = <4>;
+		cdns,tslch-ns = <4>;
+
+		partitions {
+			compatible = "fixed-partitions";
+			#address-cells = <1>;
+			#size-cells = <1>;
+			qspi_boot: partition@0 {
+				label = "boot";
+				reg = <0x00000000 0x08000000>;
+			};
+
+
+		};
+	};
+};
+
+&temp_volt {
+	voltage {
+		#address-cells = <1>;
+		#size-cells = <0>;
+		input@2 {
+			label = "0.8V VCC";
+			reg = <2>;
+		};
+
+		input@3 {
+			label = "1.8V VCCIO_SDM";
+			reg = <3>;
+		};
+
+		input@4 {
+			label = "1.8V VCCPT";
+			reg = <4>;
+		};
+
+		input@5 {
+			label = "1.2V VCCCRCORE";
+			reg = <5>;
+			};
+
+		input@6 {
+			label = "0.9V VCCH";
+			reg = <6>;
+			};
+
+		input@7 {
+			label = "0.8V VCCL";
+			reg = <7>;
+			};
+		};
+
+	temperature {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		input@0 {
+			label = "Main Die SDM";
+			reg = <0x0>;
+		};
+		input@10000 {
+			label = "Main Die corner bottom left max";
+			reg = <0x10000>;
+		};
+		input@10002 {
+			label = "Main Die corner bottom left 2";
+			reg = <0x10002>;
+		};
+		input@10003 {
+			label = "Main Die corner bottom left 3";
+			reg = <0x10003>;
+		};
+		input@10004 {
+			label = "Main Die corner bottom left 4";
+			reg = <0x10004>;
+		};
+
+		input@30000 {
+			label = "Main Die corner bottom right max";
+			reg = <0x30000>;
+		};
+		input@30002 {
+			label = "Main Die corner bottom right 2";
+			reg = <0x30002>;
+		};
+		input@30003 {
+			label = "Main Die corner bottom right 3";
+			reg = <0x30003>;
+		};
+		input@40000 {
+			label = "Main Die corner top right max";
+			reg = <0x40000>;
+		};
+		input@40003 {
+			label = "Main Die corner top right 3";
+			reg = <0x40003>;
+		};
+		input@40004 {
+			label = "Main Die corner top right 4";
+			reg = <0x40004>;
+		};
+		input@40005 {
+			label = "Main Die corner top right 5 - HPS";
+			reg = <0x40005>;
+		};
+	};
+};
+
