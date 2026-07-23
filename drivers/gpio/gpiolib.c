@@ -2988,7 +2988,7 @@ int gpiod_set_transitory(struct gpio_desc *desc, bool transitory)
 
 	/* If the driver supports it, set the persistence state now */
 	return gpio_set_config_with_argument_optional(desc,
-						      PIN_CONFIG_PERSIST_STATE,
+						     0,
 						      !transitory);
 }
 

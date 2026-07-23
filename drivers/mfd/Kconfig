@@ -424,6 +424,13 @@ config MFD_DA9063
 	  Additional drivers must be enabled in order to use the functionality
 	  of the device.
 
+config IG58M_BDINFO
+       bool "iG-RainboW-G58M platform info driver"
+       depends on AGILEX5_IG58M_H
+       default y
+       help
+         Enable iWave's IWG58M Platform Specific code. Display BSP, SOM and carrier card revision etc.
+
 config MFD_DA9150
 	tristate "Dialog Semiconductor DA9150 Charger Fuel-Gauge chip"
 	depends on I2C
@@ -2387,6 +2394,50 @@ config MFD_RSMU_I2C
 	  This driver provides common support for accessing the device.
 	  Additional drivers must be enabled in order to use the functionality
 	  of the device.
+
+config CC_I2C_BUS
+       int "I2C bus number for the Carrier board EEPROM"
+       range 0 9
+       default 0
+       help
+        Specify the I2C bus number where the Carrier board EEPROM is connected.
+
+config CC_EEPROM_ADDR
+       hex "I2C address for the Carrier board EEPROM"
+       default 0x52
+       help
+        Specify the I2C address of the Carrier board EEPROM.
+
+config SOM_I2C_BUS
+       int "I2C bus number for the PMIC Regulator 1"
+       range 0 9
+       default 0
+       help
+        Specify the I2C bus number where the PMIC Regulator 1 is connected.
+
+config SOM_EEPROM_ADDR
+       hex "I2C address for the PMIC Regulator 1"
+       default 0x58
+       help
+        Specify the I2C address of the PMIC Regulator 1.
+
+config BSP_VER_INFO
+       bool "Print BSP Version"
+       default y
+       help
+        Enable this option to print BSP Version information.
+
+config CC_REV_INFO
+       bool "Print Carrier card revision"
+       default y
+       help
+        Enable this option to print SOM Revision information.
+
+config SOM_REV_INFO
+       bool "Print SOM revision"
+       default y
+       help
+        Enable this option to print Carrier Revision information.
 
 config MFD_RSMU_SPI
 	tristate "Renesas Synchronization Management Unit with SPI"

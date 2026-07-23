@@ -38,6 +38,7 @@
 #define HPS2FPGA_BRIDGE_NAME			"hps2fpga"
 #define LWHPS2FPGA_BRIDGE_NAME			"lwhps2fpga"
 #define FPGA2HPS_BRIDGE_NAME			"fpga2hps"
+#define FPGA2SDRAM_BRIDGE_NAME			"fpga2sdram"
 
 struct altera_hps2fpga_data {
 	const char *name;
@@ -102,16 +103,20 @@ static const struct fpga_bridge_ops altera_hps2fpga_br_ops = {
 
 static struct altera_hps2fpga_data hps2fpga_data  = {
 	.name = HPS2FPGA_BRIDGE_NAME,
-	.remap_mask = ALT_L3_REMAP_H2F_MSK,
+//	.remap_mask = ALT_L3_REMAP_H2F_MSK,
 };
 
 static struct altera_hps2fpga_data lwhps2fpga_data  = {
 	.name = LWHPS2FPGA_BRIDGE_NAME,
-	.remap_mask = ALT_L3_REMAP_LWH2F_MSK,
+//	.remap_mask = ALT_L3_REMAP_LWH2F_MSK,
 };
 
 static struct altera_hps2fpga_data fpga2hps_data  = {
 	.name = FPGA2HPS_BRIDGE_NAME,
+};
+
+static struct altera_hps2fpga_data fpga2sdram_data  = {
+	.name = FPGA2SDRAM_BRIDGE_NAME,
 };
 
 static const struct of_device_id altera_fpga_of_match[] = {
@@ -121,6 +126,8 @@ static const struct of_device_id altera_fpga_of_match[] = {
 	  .data = &lwhps2fpga_data },
 	{ .compatible = "altr,socfpga-fpga2hps-bridge",
 	  .data = &fpga2hps_data },
+	{ .compatible = "altr,socfpga-fpga2sdram-bridge",
+	  .data = &fpga2sdram_data },
 	{},
 };
 
@@ -133,7 +140,7 @@ static int alt_fpga_bridge_probe(struct platform_device *pdev)
 	int ret;
 
 	priv = (struct altera_hps2fpga_data *)device_get_match_data(dev);
-
+	printk("@alt_fpga_bridge_probe() - Name: %s remap_mask: %d\n", priv->name, priv->remap_mask);
 	priv->bridge_reset = of_reset_control_get_exclusive_by_index(dev->of_node,
 								     0);
 	if (IS_ERR(priv->bridge_reset)) {
@@ -182,10 +189,11 @@ static int alt_fpga_bridge_probe(struct platform_device *pdev)
 	}
 
 	platform_set_drvdata(pdev, br);
-
+	printk("@alt_fpga_bridge_probe() - Exit sucsessfully!\n");
 	return 0;
 
 err:
+	printk("@alt_fpga_bridge_probe() - Probe failed with 0x%x \n", ret);
 	clk_disable_unprepare(priv->clk);
 
 	return ret;

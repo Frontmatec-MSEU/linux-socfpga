@@ -304,6 +304,14 @@ config ARCH_INTEL_SOCFPGA
 	  Stratix 10 (ex. Altera), Stratix10 Software Virtual Platform,
 	  Agilex and eASIC N5X.
 
+config AGILEX5_IG58M_H
+       bool "Enable Support for iWave IG58M"
+       depends on ARCH_INTEL_SOCFPGA
+       default y
+       help
+         This enables support for the iWave's IG58M Platform. If you don't know what to do here, say N
+
+
 config ARCH_STM32
 	bool "STMicroelectronics STM32 SoC Family"
 	select GPIOLIB

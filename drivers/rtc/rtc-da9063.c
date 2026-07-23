@@ -368,9 +368,12 @@ static irqreturn_t da9063_alarm_event(int irq, void *data)
 static const struct rtc_class_ops da9063_rtc_ops = {
 	.read_time = da9063_rtc_read_time,
 	.set_time = da9063_rtc_set_time,
+	/* IG58M: Removing interrupt for iWave board */
+	#ifndef CONFIG_AGILEX5_IG58M_H
 	.read_alarm = da9063_rtc_read_alarm,
 	.set_alarm = da9063_rtc_set_alarm,
 	.alarm_irq_enable = da9063_rtc_alarm_irq_enable,
+	#endif
 };
 
 static int da9063_rtc_probe(struct platform_device *pdev)
@@ -473,16 +476,19 @@ static int da9063_rtc_probe(struct platform_device *pdev)
 		clear_bit(RTC_FEATURE_UPDATE_INTERRUPT, rtc->rtc_dev->features);
 	}
 
+	#ifndef CONFIG_AGILEX5_IG58M_H
 	irq_alarm = platform_get_irq_byname_optional(pdev, "ALARM");
 	if (irq_alarm >= 0) {
 		ret = devm_request_threaded_irq(&pdev->dev, irq_alarm, NULL,
 						da9063_alarm_event,
 						IRQF_TRIGGER_LOW | IRQF_ONESHOT,
 						"ALARM", rtc);
-		if (ret)
+		if (ret) {
 			dev_err(&pdev->dev,
 				"Failed to request ALARM IRQ %d: %d\n",
 				irq_alarm, ret);
+			return ret;
+		}
 
 		ret = dev_pm_set_wake_irq(&pdev->dev, irq_alarm);
 		if (ret)
@@ -491,11 +497,12 @@ static int da9063_rtc_probe(struct platform_device *pdev)
 				 irq_alarm, ret);
 
 		device_init_wakeup(&pdev->dev, true);
-	}  else if (irq_alarm != -ENXIO) {
+	} else if (irq_alarm != -ENXIO) {
 		return irq_alarm;
 	} else {
 		clear_bit(RTC_FEATURE_ALARM, rtc->rtc_dev->features);
 	}
+	#endif
 
 	return devm_rtc_register_device(rtc->rtc_dev);
 }

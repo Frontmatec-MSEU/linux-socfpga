@@ -240,7 +240,9 @@ static const struct gpio_chip reference_gc = {
 	.direction_input = da9062_gpio_direction_input,
 	.direction_output = da9062_gpio_direction_output,
 	.set_config = da9062_gpio_set_config,
+#ifndef CONFIG_AGILEX5_IG58M_H
 	.to_irq = da9062_gpio_to_irq,
+#endif
 	.can_sleep = true,
 	.ngpio = DA9062_GPIO_NUM,
 	.base = -1,
