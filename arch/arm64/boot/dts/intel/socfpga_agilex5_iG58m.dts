@@ -1,8 +1,6 @@
-/*
- * Copyright (C) 2025 iWave Global
- * IP Support <support.ip@iwave-global.com>
- */
+
 #include "socfpga_agilex5.dtsi"
+#include "socfpga_agilex5_eth_1p10g.dtsi"
 
 / {
 	model = "SoCFPGA Agilex5 based iG58M development platform";
@@ -11,6 +9,7 @@
 
 	aliases {
 		serial0 = &uart0;
+		serial1 = &uart1;
 		ethernet0 = &gmac2;
 		rtc0 = &da9062_rtc;
 	};
@@ -32,102 +31,88 @@
 		clock-output-names = "fpga-ref-clk";
 		};
 
-		gpio_pmod: gpio@20000020 {
-			status = "okay";
-			compatible = "altr,pio-1.0";
-			reg = <0x0 0x20000020 0x0 0x20>;
-			altr,ngpio = <8>;
-			#gpio-cells = <2>;
-			gpio-controller;
-		};
-
-		gpio_fmc_io_1: gpio@20000080 {
-			status = "okay";
-			compatible = "altr,pio-1.0";
-			reg = <0x0 0x20000080 0x0 0x20>;
-			altr,ngpio = <32>;
-			#gpio-cells = <2>;
-			gpio-controller;
-		};
-
-		gpio_fmc_io_2: gpio@200000A0 {
-			status = "okay";
-			compatible = "altr,pio-1.0";
-			reg = <0x0 0x200000A0 0x0 0x20>;
-			altr,ngpio = <32>;
-			#gpio-cells = <2>;
-			gpio-controller;
-		};
-
-		gpio_fmc_io_3: gpio@200000C0 {
-			status = "okay";
-			compatible = "altr,pio-1.0";
-			reg = <0x0 0x200000C0 0x0 0x20>;
-			altr,ngpio = <32>;
-			#gpio-cells = <2>;
-			gpio-controller;
-		};
-
-		gpio_fmc_io_4: gpio@200000E0 {
-			status = "okay";
-			compatible = "altr,pio-1.0";
-			reg = <0x0 0x200000E0 0x0 0x20>;
-			altr,ngpio = <29>;
-			#gpio-cells = <2>;
-			gpio-controller;
-		};
-
-		gpio_header_1: gpio@21000040 {
-			status = "okay";
-			compatible = "altr,pio-1.0";
-			reg = <0x0 0x21000040 0x0 0x20>;
-			altr,ngpio = <18>;
-			#gpio-cells = <2>;
-			gpio-controller;
-		};
-
-		gpio_header_2: gpio@20000060 {
-			status = "okay";
-			compatible = "altr,pio-1.0";
-			reg = <0x0 0x20000060 0x0 0x20>;
-			altr,ngpio = <21>;
-			#gpio-cells = <2>;
-			gpio-controller;
-		};
-
-                /* Adding Bridges */
-                fpga_hps2fpgabridge: fpga_bridge@40000000 {
-                        compatible = "altr,socfpga-hps2fpga-bridge";
-                        reg = <0x40000000 0x40000000>;
-                        resets = <&rst SOC2FPGA_RESET>;
-                        clocks = <&clkmgr AGILEX5_L4_MAIN_CLK>;
-                        status = "okay";
-                };
-
-                fpga_lwhps2fpgabridge: fpga_bridge@20000000{
-                        compatible = "altr,socfpga-lwhps2fpga-bridge";
-                        reg = <0x20000000 0x20000000>;
-                        resets = <&rst LWHPS2FPGA_RESET>;
-                        clocks = <&clkmgr AGILEX5_L4_MAIN_CLK>;
-                        status = "okay";
-                };
-
-                fpga_fpga2hpsbridge: fpga-bridge@0 {
-                        compatible = "altr,socfpga-fpga2hps-bridge";
-                        reg = <0x0 0x20000000>;
-                        resets = <&rst FPGA2SOC_RESET>;
-                        clocks = <&clkmgr AGILEX5_L4_MAIN_CLK>;
-                        status = "okay";
-                };
-
-                fpga_fpga2sdram: fpga-bridge@80000000 {
-                        compatible = "altr,socfpga-fpga2sdram-bridge";
-                        reg = <0x80000000 0x80000000>;
-                        resets = <&rst F2SSDRAM0_RESET>;
-                        clocks = <&clkmgr AGILEX5_L4_MAIN_CLK>;
-                        status = "okay";
-                };
+	gts_transceiver0 {
+		compatible = "intel,gts";
+		phandle = <0x23>;
 	};
+
+    fpga_version@20000000 {
+        compatible = "generic-uio";
+        reg = <0x0 0x20000000 0x0 0x10>;
+        status = "okay";
+    };
+
+	gpio_pmod: gpio@20000020 {
+		status = "okay";
+		compatible = "altr,pio-1.0";
+		reg = <0x0 0x20000020 0x0 0x20>;
+		altr,ngpio = <8>;
+		#gpio-cells = <2>;
+		gpio-controller;
+	};
+
+	gpio_irq_control: gpio@20000040 {
+		status = "okay";
+		compatible = "altr,pio-1.0";
+		reg = <0x0 0x20000040 0x0 0x20>;
+		altr,ngpio = <8>;
+		#gpio-cells = <2>;
+		gpio-controller;
+	};
+
+	gpio_afe_control: gpio@200000a0 {
+		status = "okay";
+		compatible = "altr,pio-1.0";
+		reg = <0x0 0x200000a0 0x0 0x20>;
+		altr,ngpio = <8>;
+		#gpio-cells = <2>;
+		gpio-controller;
+	};
+
+	/* Adding Bridges */
+	fpga_hps2fpgabridge: fpga_bridge@40000000 {
+			compatible = "altr,socfpga-hps2fpga-bridge";
+			reg = <0x40000000 0x40000000>;
+			resets = <&rst SOC2FPGA_RESET>;
+			clocks = <&clkmgr AGILEX5_L4_MAIN_CLK>;
+			status = "okay";
+	};
+
+	fpga_lwhps2fpgabridge: fpga_bridge@20000000{
+			compatible = "altr,socfpga-lwhps2fpga-bridge";
+			reg = <0x20000000 0x20000000>;
+			resets = <&rst LWHPS2FPGA_RESET>;
+			clocks = <&clkmgr AGILEX5_L4_MAIN_CLK>;
+			status = "okay";
+	};
+
+	fpga_fpga2hpsbridge: fpga-bridge@0 {
+			compatible = "altr,socfpga-fpga2hps-bridge";
+			reg = <0x0 0x20000000>;
+			resets = <&rst FPGA2SOC_RESET>;
+			clocks = <&clkmgr AGILEX5_L4_MAIN_CLK>;
+			status = "okay";
+	};
+
+	fpga_fpga2sdram: fpga-bridge@80000000 {
+			compatible = "altr,socfpga-fpga2sdram-bridge";
+			reg = <0x80000000 0x80000000>;
+			resets = <&rst F2SSDRAM0_RESET>;
+			clocks = <&clkmgr AGILEX5_L4_MAIN_CLK>;
+			status = "okay";
+	};
+
+	my_uio_device@1fc00000 {
+		compatible = "generic-uio";
+		reg = <0x0 0x200040 0x0 0x20>; /* Assumes Lightweight HPS2FPGA bridge */
+		interrupt-parent = <0x03>; /* Links to your GIC v3 phandle */
+
+		/* Change 72 to match your actual f2h_irq bit mapping! */
+		interrupts = <0x00 72 0x04>;
+
+		status = "okay";
+	};
+};
 
 &gpio0 {
 	status = "okay";
@@ -139,7 +124,7 @@
 
 &i2c0 {
 	status = "okay";
-	clock-frequency = <400000>;
+	clock-frequency = <100000>;
 
 	pmic0: da9062@58 {
 		compatible = "dlg,da9062";
@@ -187,73 +172,84 @@
 		#address-cells = <1>;
 		#size-cells = <0>;
 
-		i2c@0 {
-			#address-cells = <1>;
-			#size-cells = <0>;
-			reg = <0>;
+            i2c_sfp0: i2c@2 {
+                #address-cells = <1>;
+                #size-cells = <0>;
+                reg = <2>;
 
-			gpio2: gpio-controller@20 {
-				compatible = "ti,tca6416";
-				reg = <0x20>;
-				#gpio-cells = <2>;
-				gpio-controller;
-				interrupt-controller;
-				#interrupt-cells = <2>;
-				interrupt-parent = <&porta>;
-				interrupts = <10 IRQ_TYPE_EDGE_FALLING>;
-			};
-		};
+               sfp0_eeprom: eeprom@50 {
+                    compatible = "atmel,24c02"; /* SFP A0h is effectively a 256-byte 24c02 EEPROM */
+                    reg = <0x50>;
+                };
+            };
 
-		i2c@1 {
-			#address-cells = <1>;
-			#size-cells = <0>;
-			reg = <1>;
+            i2c_sfp1: i2c@3 {
+                #address-cells = <1>;
+                #size-cells = <0>;
+                reg = <3>;
 
-			gpio3: gpio-controller@21 {
-				compatible = "ti,tca6416";
-				reg = <0x21>;
-				#gpio-cells = <2>;
-				gpio-controller;
-				interrupt-controller;
-				#interrupt-cells = <2>;
-				interrupt-parent = <&gpio2>;
-				interrupts = <6 IRQ_TYPE_EDGE_FALLING>;
-			};
-		};
+                sfp1_eeprom: eeprom@50 {
+                    compatible = "atmel,24c02";
+                    reg = <0x50>;
+                };
+            };
 
-		i2c@2 {
-			#address-cells = <1>;
-			#size-cells = <0>;
-			reg = <2>;
+       }; /* mux*/
+ }; /*i2c*/
 
-			eeprom2: eeprom@50 {
-				compatible = "atmel,24c04";
-				reg = <0x50>;
-				pagesize = <32>;
-				address-width = <16>;
-				size = <4096>;
-			};
-		};
+&spi0 {
+    status = "okay";
+    #address-cells = <1>;
+    #size-cells = <0>;
+	/delete-property/ dmas;
+	/delete-property/ dma-names;
 
-		i2c@3 {
-			#address-cells = <1>;
-			#size-cells = <0>;
-			reg = <3>;
-		};
-	};
+    afe5828@0 {
+        compatible = "rohm,dh2228fv";
+        reg = <0x00>;
+        spi-max-frequency = <10000>;
+    };
+
+    afe5828@1 {
+        compatible = "rohm,dh2228fv";
+        reg = <1>;
+        spi-max-frequency = <10000>;
+    };
+};
+
+&spi1 {
+    status = "okay";
+    #address-cells = <1>;
+    #size-cells = <0>;
+	/delete-property/ dmas;
+	/delete-property/ dma-names;
+
+        tpm@0 {
+			compatible = "st,st33htpm-spi", "tcg,tpm_tis-spi";
+			reg = <0x00>;
+			spi-max-frequency = <1000000>;
+			status = "okay";
+        };
 };
 
 &gmac2 {
 	status = "okay";
 	phy-mode = "rgmii-id";
 	phy-handle = <&emac2_phy0>;
-	max-frame-size = <9000>;
-	mdio0 {
+	mdio {
 		#address-cells = <1>;
 		#size-cells = <0>;
 		compatible = "snps,dwmac-mdio";
-		emac2_phy0: ethernet-phy@4 {
-			reg = <4>;
+		emac2_phy0: ethernet-phy@3 {
+		   reg = <3>;
+               reset-gpios = <&portb 3 GPIO_ACTIVE_LOW>;
+               reset-assert-us = <10000>;
+               reset-deassert-us = <100000>;
+	           rxc-skew-psec = <1000>;
+	           txc-skew-psec = <1000>;
+	           rxd-skew-psec = <0>;
+	           txd-skew-psec = <0>;
+
 		};
 	};
 };
@@ -315,10 +311,19 @@
     status = "okay";
 };
 
+&uart1 {
+    status = "okay";
+};
+
+&spi1 {
+    status = "okay";
+};
+
 
 &usb31 {
 	status = "okay";
 	dr_mode = "host";
+    maximum-speed = "super-speed";
 };
 
 &smmu {
@@ -462,4 +467,3 @@
 		};
 	};
 };
-
