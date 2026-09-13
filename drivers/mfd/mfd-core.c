@@ -169,7 +169,12 @@ static int mfd_add_device(struct device *parent, int id,
 
 	pdev->dev.parent = parent;
 	pdev->dev.type = &mfd_dev_type;
+	/* IWG58M: DMA Mask: inherit the DMA mask from  parent device when it's available, or set it to zero  */
+	#ifndef CONFIG_AGILEX5_IWG58M_H
 	pdev->dev.dma_mask = parent->dma_mask;
+	#else
+        pdev->platform_dma_mask = parent->dma_mask ? *parent->dma_mask : 0;
+	#endif
 	pdev->dev.dma_parms = parent->dma_parms;
 	pdev->dev.coherent_dma_mask = parent->coherent_dma_mask;
 

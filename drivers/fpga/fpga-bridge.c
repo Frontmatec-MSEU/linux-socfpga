@@ -285,6 +285,45 @@ int fpga_bridge_get_to_list(struct device *dev,
 }
 EXPORT_SYMBOL_GPL(fpga_bridge_get_to_list);
 
+static ssize_t enable_show(struct device *dev,
+			   struct device_attribute *attr, char *buf)
+{
+	struct fpga_bridge *bridge = to_fpga_bridge(dev);
+	int state = 1;
+
+	if (bridge->br_ops && bridge->br_ops->enable_show) {
+		state = bridge->br_ops->enable_show(bridge);
+		if (state < 0)
+			return state;
+	}
+
+	return sysfs_emit(buf, "%d\n", state ? 1 : 0);
+}
+
+static ssize_t enable_store(struct device *dev,
+			    struct device_attribute *attr,
+			    const char *buf, size_t count)
+{
+	struct fpga_bridge *bridge = to_fpga_bridge(dev);
+	bool enable;
+	int ret;
+
+	ret = kstrtobool(buf, &enable);
+	if (ret)
+		return ret;
+
+	dev_dbg(dev, "User requested bridge %s\n", enable ? "enable" : "disable");
+
+	if (bridge->br_ops && bridge->br_ops->enable_set) {
+		ret = bridge->br_ops->enable_set(bridge, enable);
+		if (ret)
+			return ret;
+	}
+
+	dev_dbg(dev, "FPGA bridge %s successfully\n", enable ? "enabled" : "disabled");
+	return count;
+}
+
 static ssize_t name_show(struct device *dev,
 			 struct device_attribute *attr, char *buf)
 {
@@ -310,10 +349,13 @@ static ssize_t state_show(struct device *dev,
 
 static DEVICE_ATTR_RO(name);
 static DEVICE_ATTR_RO(state);
+static DEVICE_ATTR_RW(enable);
+
 
 static struct attribute *fpga_bridge_attrs[] = {
 	&dev_attr_name.attr,
 	&dev_attr_state.attr,
+	&dev_attr_enable.attr,
 	NULL,
 };
 ATTRIBUTE_GROUPS(fpga_bridge);

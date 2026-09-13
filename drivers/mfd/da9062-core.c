@@ -663,7 +663,8 @@ static int da9062_i2c_probe(struct i2c_client *i2c)
 			cell_num = ARRAY_SIZE(da9062_devs_irq);
 			irq_chip = &da9062_irq_chip;
 		}
-
+/* IG58M: Removing interrupt for iWave board */
+#ifndef CONFIG_AGILEX5_IG58M_H
 		ret = da9062_configure_irq_type(chip, i2c->irq, &trigger_type);
 		if (ret < 0) {
 			dev_err(chip->dev, "Failed to configure IRQ type\n");
@@ -680,6 +681,10 @@ static int da9062_i2c_probe(struct i2c_client *i2c)
 		}
 
 		irq_base = regmap_irq_chip_get_base(chip->regmap_irq);
+#else
+	irq_base = 0;
+#endif
+
 	}
 
 	ret = mfd_add_devices(chip->dev, PLATFORM_DEVID_NONE, cell,
