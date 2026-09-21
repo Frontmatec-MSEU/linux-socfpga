@@ -136,11 +136,25 @@
 					reg-names = "packetswitch";
 		};
 
-		// sfp_eth0: sfp-eth0 {
-		//	compatible = "altera,sfp-mem";
-		//	reg-names = "sfp-mem-ctrl";
-		//	reg = <0x44040000 0x00001000>;
-		//	status = "okay";
+        sfp_eth0: sfp-eth0 {
+            compatible = "altera,sfp-mem";
+            reg-names = "sfp-mem-ctrl";
+            reg = <0x44040000 0x00001000>;
+            status = "okay";
+        };
+
+		/*
+		 New FPGA : 0x2040014 is RW (but no function). 0x20400010 is now data for input and output:
+		 SFP status is located on address 0x20400010. Bit 2,1 and 0 is (sfp1_tx_fault, sfp1_los, sfp1_mod_det)
+		 The working SFP is "SFP2" with status bit 6,5 and 4  (sfp2_tx_fault, sfp2_los, sfp2_mod_det).
+		 Tx-disable is 0x20400010 bit 3 (SFP1 Tx-dis) and bit 7  (SFP2 Tx-dis).
+		 */
+		//fpga_sfp_gpio: gpio@20400010 {
+		//	compatible = "wd,mbgpio";
+		//	reg = <0x20400010 0x4>;
+		//	gpio-controller;
+		//	#gpio-cells = <2>;
+		//	ngpios = <8>;
 		//};
 
 		msgdma_gts_0_eth: msgdma_gts_0_eth {
@@ -163,6 +177,8 @@
 			fec-cw-pos-rx = <0x0>;
 			ui-adj-interval = <250>;
 			hssiss = <&hssiss_0_hssiss>;
+			//sfp = <&sfp_cage2>;
+            //sfp = <&sfp_eth0>;
 			fixed-link {
 				speed = <10000>;
 				full-duplex;
@@ -190,4 +206,32 @@
 			};
 		};
      };
+
+	//sfp_cage1: sfp-cage-1 {
+	//	compatible = "sff,sfp";
+	//	/* Point to your respective I2C channel if SFP1 uses a different segment */
+	//	i2c-bus = <&i2c_sfp1>;
+
+	//	/* Bit 0, 1, 2 for Mod_Det, LOS, Tx_Fault */
+	//	mod-def0-gpios   = <&fpga_sfp_gpio 0 GPIO_ACTIVE_LOW>;
+	//	los-gpios        = <&fpga_sfp_gpio 1 GPIO_ACTIVE_HIGH>;
+	//	tx-fault-gpios   = <&fpga_sfp_gpio 2 GPIO_ACTIVE_HIGH>;
+	//
+	//	/* Bit 3 for Tx-Disable */
+	//	tx-disable-gpios = <&fpga_sfp_gpio 3 GPIO_ACTIVE_HIGH>;
+	//	};
+
+	//sfp_cage2: sfp-cage-2 {
+	//	compatible = "sff,sfp";
+	//	i2c-bus = <&i2c_sfp0>; /* Ensure this points to the correct I2C channel for SFP2 */
+
+	//	/* Bit 4, 5, 6 for Mod_Det, LOS, Tx_Fault */
+	//	mod-def0-gpios   = <&fpga_sfp_gpio 4 GPIO_ACTIVE_LOW>;
+	//	los-gpios        = <&fpga_sfp_gpio 5 GPIO_ACTIVE_HIGH>;
+	//	tx-fault-gpios   = <&fpga_sfp_gpio 6 GPIO_ACTIVE_HIGH>;
+	//
+	//	/* Bit 7 for Tx-Disable */
+	//	tx-disable-gpios = <&fpga_sfp_gpio 7 GPIO_ACTIVE_HIGH>;
+	//};
+
 };
