@@ -11,14 +11,14 @@
 //pktcli   0x1000_0000  0x5000_0000  0x0000_1000
 //pktsw    0x1001_0000  0x5001_0000  0x0001_0000
 
-//new:
+// new:
 //          Offset       Absolute     Size
 // user_csr 0x0020_0000  0x2020_0000  0x0000_1000
 // qhip     0x0030_0000  0x2030_0000  0x0010_0000
-// qsfpctrl Removed 
+// qsfpctrl Removed
 // msgdma   0x0500_0000  0x2500_0000  0x0000_0400
-// pktcli   0x0010_0000  0x2010_0000  0x0000_1000
-// pktsw    0x0012_0000  0x2012_0000  0x0001_0000
+// pktcli   0x0010_0000  0x2010_0000  0x0000_1000  // customer Qsys: csr_bridges_0.axi4lite_pktcli_0_s0
+// pktsw    0x0011_0000  0x2011_0000  0x0001_0000  // customer Qsys: csr_bridges_0.axi4lite_ptpbridge_s0 / axi4lite_packetsw_m0
 
 
 // FPGA DDR (2 Gbyte, still working on the other 2 Gbyte ...)
@@ -78,6 +78,7 @@
 //                            <0x00000001 0x50010000 0x50010000 0x00003000>; /*axi_h2f: Port1:HE, Pkt Mux, User CSR*/
 //		};
 
+/* The address mappings are taken from the Qsys external/altera/agilex5-ed-ethernet/a5e065b-mod-devkit-exp-prod/src/hw/src/qsys/qsys_top.qsys */
 		agilex_hps_bridges: bus@20000000 {
                 compatible = "simple-bus";
                 reg = <0x20000000 0x00001000>,
@@ -86,12 +87,12 @@
                 reg-names = "axi_h2f", "axi_h2f_lw";
                 #address-cells = <2>;
                 #size-cells = <1>;
-                ranges =    <0x00000000 0x00000000 0x20000000 0x00001000>, /*axi h2f_lw*/
-				    <0x00000000 0x00200000 0x20200000 0x00001000>, /*axi_h2f_lw: User CSR*/
-				    <0x00000000 0x00300000 0x20300000 0x00100000>, /*axi_h2f_lw: QHIP*/
-				    <0x00000000 0x05000000 0x25000000 0x00000400>, /*axi_h2f_lw: mSGDMA Global CSR, Port CSR*/
-				    <0x00000000 0x00100000 0x20100000 0x00001000>, /*axi_h2f_lw: Pkt CLI*/
-				    <0x00000000 0x00120000 0x20120000 0x00010000>; /*axi_h2f_lw: Pkt Switch*/
+				ranges =    <0x00000000 0x00000000 0x20000000 0x00001000>, /* customer Qsys: bridge root / h2f_lw */
+					    <0x00000000 0x00200000 0x20200000 0x00001000>, /* customer Qsys: csr_bridges_0.user_space_csr_s0 */
+					    <0x00000000 0x00300000 0x20300000 0x00100000>, /* customer Qsys: csr_bridges_0.qhip_port_0_s0 */
+					    <0x00000000 0x05000000 0x25000000 0x00000400>, /* customer Qsys: subsys_msgdma.csr */
+					    <0x00000000 0x00100000 0x20100000 0x00001000>, /* customer Qsys: csr_bridges_0.axi4lite_pktcli_0_s0 */
+					    <0x00000000 0x00120000 0x20120000 0x00010000>; /* customer Qsys: csr_bridges_0.axi4lite_ptpbridge_s0 / axi4lite_packetsw_m0 */
 		};
 
 	
@@ -111,37 +112,36 @@
 	hssiss_0_hssiss: hssiss_0_hssiss {
 		compatible = "intel, hssiss-2.0";
 		reg-names = "sscsr", "usr_csr";
-		reg = <0x20300000 0x00400000>,
-				<0x20200000 0x0001000>;
+		/* customer Qsys: hssiss subsystem base window */
+		reg = <0x20300000 0x00100000>,
+			<0x20200000 0x00001000>;
 				
 		reset-mode ="reg";
 		tr-type = <&gts_transceiver0>;
 	};
 
-		pktgen_0: pktgen@81010000 {
-                         compatible = "generic-uio";
-						 reg = <0x20100000 0x1000>;
-                         reg-names = "pkt_cli";
-                };
-
-		pktgen_1: pktgen@81020000 {
-					compatible = "generic-uio";
-					reg = <0x20101000 0x1000>;
-					reg-names = "pkt_cli";
+		pktgen_0: pktgen@20100000 { /* customer Qsys: csr_bridges_0.axi4lite_pktcli_0_s0 */
+			compatible = "generic-uio";
+			reg = <0x20100000 0x1000>;
+			reg-names = "pkt_cli";
+			status = "okay";
 		};
 
-		packetswitch_0: packetswitch@81000000 {
-					compatible = "generic-uio";
-					reg = <0x20120000 0x10000>;
-					reg-names = "packetswitch";
+		packetswitch_0: packetswitch@20110000 { /* customer Qsys: csr_bridges_0.axi4lite_ptpbridge_s0 / axi4lite_packetsw_m0 */
+			compatible = "generic-uio";
+			reg = <0x20110000 0x10000>;
+			reg-names = "packetswitch";
+			status = "okay";
 		};
 
-        //sfp_eth0: sfp-eth0 {
-        //    compatible = "altera,sfp-mem";
-        //    reg-names = "sfp-mem-ctrl";
-        //    reg = <0x44040000 0x00001000>;
-        //    status = "okay";
-        //};
+		// QSFP controller was present in the original design at 0x44040000,
+		// but it is not part of the customer Qsys map, so it remains disabled.
+		//sfp_eth0: sfp-eth0 {
+		//    compatible = "altera,sfp-mem";
+		//    reg-names = "sfp-mem-ctrl";
+		//    reg = <0x44040000 0x00001000>;
+		//    status = "okay";
+		//};
 
 		/*
 		 New FPGA : 0x2040014 is RW (but no function). 0x20400010 is now data for input and output:
@@ -206,7 +206,9 @@
 		};
      };
 
-	sfp_cage1: sfp-cage-1 {
+		// SFP cage nodes are left disabled because the customer Qsys map no
+		// longer exposes the original QSFP controller window.
+		sfp_cage1: sfp-cage-1 {
 		compatible = "sff,sfp";
 		/* Point to your respective I2C channel if SFP1 uses a different segment */
 		i2c-bus = <&i2c_sfp1>;
