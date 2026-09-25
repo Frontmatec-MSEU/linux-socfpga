@@ -93,6 +93,7 @@
 					    <0x00000000 0x05000000 0x25000000 0x00000400>, /* customer Qsys: subsys_msgdma.csr */
 					    <0x00000000 0x00100000 0x20100000 0x00001000>, /* customer Qsys: csr_bridges_0.axi4lite_pktcli_0_s0 */
 					    <0x00000000 0x00120000 0x20120000 0x00010000>; /* customer Qsys: csr_bridges_0.axi4lite_ptpbridge_s0 / axi4lite_packetsw_m0 */
+                 status = "okay";
 		};
 
 	
@@ -102,11 +103,13 @@
 			compatible = "fixed-clock";
 			clock-frequency = <156250000>;
 			clock-output-names = "tod_in_clock";
+            status = "okay";
 		};
 	};
 
 	gts_transceiver0: gts_transceiver0 {
 		compatible = "intel, gts";
+        status = "okay";
 	};
 
 	hssiss_0_hssiss: hssiss_0_hssiss {
@@ -117,6 +120,7 @@
 			<0x20200000 0x00001000>;
 				
 		reset-mode ="reg";
+        status = "okay";
 		tr-type = <&gts_transceiver0>;
 	};
 
@@ -155,6 +159,7 @@
 			gpio-controller;
 			#gpio-cells = <2>;
 			ngpios = <8>;
+            status = "okay";
 		};
 
 		msgdma_gts_0_eth: msgdma_gts_0_eth {
@@ -171,11 +176,11 @@
 			interrupt-parent = <&intc>;
 			interrupt-names = "dma0_tx_irq", "dma0_rx_irq";
 			interrupts = <GIC_SPI 19 IRQ_TYPE_LEVEL_HIGH>, <GIC_SPI 20 IRQ_TYPE_LEVEL_HIGH>;
-			status = "okay";
 			fec-type="no-fec";
 			phy-mode = "10gbase-r";
 			fec-cw-pos-rx = <0x0>;
 			ui-adj-interval = <250>;
+            status = "okay";
 			hssiss = <&hssiss_0_hssiss>;
 			//sfp = <&sfp_cage2>;
 			fixed-link {
