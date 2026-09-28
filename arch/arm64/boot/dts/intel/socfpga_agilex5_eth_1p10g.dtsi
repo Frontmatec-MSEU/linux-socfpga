@@ -154,11 +154,21 @@
 		 Tx-disable is 0x20400010 bit 3 (SFP1 Tx-dis) and bit 7  (SFP2 Tx-dis).
 		 */
 		fpga_sfp_gpio: gpio@20400010 {
-			compatible = "wd,mbgpio";
+			compatible = "wd,mbl-gpio";
 			reg = <0x20400010 0x4>;
+			reg-names = "dat";
 			gpio-controller;
 			#gpio-cells = <2>;
 			ngpios = <8>;
+			gpio-line-names =
+				"sfp1_mod_def0",
+				"sfp1_los",
+				"sfp1_tx_fault",
+				"sfp1_tx_disable",
+				"sfp2_mod_def0",
+				"sfp2_los",
+				"sfp2_tx_fault",
+				"sfp2_tx_disable";
             status = "okay";
 		};
 
@@ -175,14 +185,16 @@
 			num_channels = <1>;
 			interrupt-parent = <&intc>;
 			interrupt-names = "dma0_tx_irq", "dma0_rx_irq";
-			interrupts = <GIC_SPI 19 IRQ_TYPE_LEVEL_HIGH>, <GIC_SPI 20 IRQ_TYPE_LEVEL_HIGH>;
+			/* customer Qsys: f2h_irq0 bit0=tx, bit1=rx -> SPI 17/18 */
+			interrupts = <GIC_SPI 17 IRQ_TYPE_LEVEL_HIGH>, <GIC_SPI 18 IRQ_TYPE_LEVEL_HIGH>;
 			fec-type="no-fec";
 			phy-mode = "10gbase-r";
+			autoneg_enabled = "no";
 			fec-cw-pos-rx = <0x0>;
 			ui-adj-interval = <250>;
             status = "okay";
 			hssiss = <&hssiss_0_hssiss>;
-			//sfp = <&sfp_cage2>;
+			sfp = <&sfp_cage2>;
 			fixed-link {
 				speed = <10000>;
 				full-duplex;
@@ -209,38 +221,47 @@
 				rx-fifo-almost-empty = <0x1000>;
 			};
 		};
+
+		/*
+		 * Current customer FPGA build is single-channel only:
+		 * - Qsys exposes one subsys_msgdma CSR window at 0x25000000 (dma_0)
+		 * - IRQs are f2h_irq0 bit0/bit1 only (mapped to SPI 17/18)
+		 * - Top-level RTL uses NUM_CHANNELS=1 and only channel index [0]
+		 *
+		 * Do not define msgdma_gts_1_eth until the FPGA design adds a true
+		 * second DMA/HSSI datapath and exports distinct CSR/IRQ resources.
+		 */
      };
 
-		// SFP cage nodes are left disabled because the customer Qsys map no
-		// longer exposes the original QSFP controller window.
-		sfp_cage1: sfp-cage-1 {
-		compatible = "sff,sfp";
-		/* Point to your respective I2C channel if SFP1 uses a different segment */
-		i2c-bus = <&i2c_sfp1>;
+    // SFP cage nodes are left disabled because the customer Qsys map no
+    // longer exposes the original QSFP controller window.
+    sfp_cage1: sfp-cage-1 {
+        compatible = "sff,sfp";
+        i2c-bus = <&i2c_sfp1>;
 
-		/* Bit 0, 1, 2 for Mod_Det, LOS, Tx_Fault */
-		//mod-def0-gpios   = <&fpga_sfp_gpio 0 GPIO_ACTIVE_LOW>;
-		//los-gpios        = <&fpga_sfp_gpio 1 GPIO_ACTIVE_HIGH>;
-		//tx-fault-gpios   = <&fpga_sfp_gpio 2 GPIO_ACTIVE_HIGH>;
+        /* Bit 0, 1, 2 for Mod_Det, LOS, Tx_Fault */
+        mod-def0-gpios   = <&fpga_sfp_gpio 0 GPIO_ACTIVE_LOW>;
+        los-gpios        = <&fpga_sfp_gpio 1 GPIO_ACTIVE_HIGH>;
+        tx-fault-gpios   = <&fpga_sfp_gpio 2 GPIO_ACTIVE_HIGH>;
 
-		/* Bit 3 for Tx-Disable */
-		//tx-disable-gpios = <&fpga_sfp_gpio 3 GPIO_ACTIVE_HIGH>;
+        /* Bit 3 for Tx-Disable */
+        tx-disable-gpios = <&fpga_sfp_gpio 3 GPIO_ACTIVE_LOW>;
 
-        status = "disabled";
-		};
+		status = "disabled";
+    };
 
 	sfp_cage2: sfp-cage-2 {
 		compatible = "sff,sfp";
-		i2c-bus = <&i2c_sfp0>; /* Ensure this points to the correct I2C channel for SFP2 */
+		i2c-bus = <&i2c_sfp0>; 
 
 		/* Bit 4, 5, 6 for Mod_Det, LOS, Tx_Fault */
-		//mod-def0-gpios   = <&fpga_sfp_gpio 4 GPIO_ACTIVE_LOW>;
-		//los-gpios        = <&fpga_sfp_gpio 5 GPIO_ACTIVE_HIGH>;
-		//tx-fault-gpios   = <&fpga_sfp_gpio 6 GPIO_ACTIVE_HIGH>;
+        mod-def0-gpios   = <&fpga_sfp_gpio 4 GPIO_ACTIVE_LOW>;
+        los-gpios        = <&fpga_sfp_gpio 5 GPIO_ACTIVE_HIGH>;
+        tx-fault-gpios   = <&fpga_sfp_gpio 6 GPIO_ACTIVE_HIGH>;
 
 		/* Bit 7 for Tx-Disable */
-		// tx-disable-gpios = <&fpga_sfp_gpio 7 GPIO_ACTIVE_HIGH>;
-		status = "disabled";
+		tx-disable-gpios = <&fpga_sfp_gpio 7 GPIO_ACTIVE_LOW>;
+		
+        status = "okay";
 	};
-
 };

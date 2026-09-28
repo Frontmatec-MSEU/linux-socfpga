@@ -102,16 +102,16 @@
 			status = "okay";
 	};
 
-	my_uio_device@1fc00000 {
-		compatible = "generic-uio";
-		reg = <0x0 0x200040 0x0 0x20>; /* Assumes Lightweight HPS2FPGA bridge */
-		interrupt-parent = <0x03>; /* Links to your GIC v3 phandle */
+	//my_uio_device@1fc00000 {
+	//	compatible = "generic-uio";
+	//	reg = <0x0 0x200040 0x0 0x20>; /* Assumes Lightweight HPS2FPGA bridge */
+	//	interrupt-parent = <0x03>; /* Links to your GIC v3 phandle */
 
-		/* Change 72 to match your actual f2h_irq bit mapping! */
-		interrupts = <0x00 72 0x04>;
+	//	/* Change 72 to match your actual f2h_irq bit mapping! */
+	//	interrupts = <0x00 72 0x04>;
 
-		status = "okay";
-	};
+	//	status = "okay";
+	//};
 };
 
 &gpio0 {
