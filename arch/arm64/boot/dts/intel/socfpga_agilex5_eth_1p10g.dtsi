@@ -131,9 +131,9 @@
 			status = "okay";
 		};
 
-		packetswitch_0: packetswitch@20110000 { /* customer Qsys: csr_bridges_0.axi4lite_ptpbridge_s0 / axi4lite_packetsw_m0 */
+		packetswitch_0: packetswitch@20120000 { /* customer Qsys: csr_bridges_0.axi4lite_ptpbridge_s0 / axi4lite_packetsw_m0 */
 			compatible = "generic-uio";
-			reg = <0x20110000 0x10000>;
+			reg = <0x20120000 0x10000>;
 			reg-names = "packetswitch";
 			status = "okay";
 		};
@@ -178,6 +178,18 @@
 			#size-cells = <1>;
 			ranges;
 			if_name = "eth1";
+			/* Fixed, locally administered MAC (bit 1 of first octet set) so eth1 does not
+			 * get a random address each boot. Same on every board - replace with a
+			 * per-board address (U-Boot eth1addr / SoM 24MAC402 EUI-48) for production.
+			 */
+			local-mac-address = [02 af 04 00 00 01];
+
+            /* Max MTU (driver treats it as MTU, also programmed into the MAC).
+             * It's a quoute from software/workspace/linux-socfpga/drivers/net/ethernet/altera/intel_fpga_eth_main.c
+             * The max frame size is 1518, a VLAN header would be additional 4 bytes and additional
+             * headroom for alignment is 2 bytes, 2048 is just fine.
+			 */
+			max-frame-size = <1518>;
 			tile_chan = <0x0>;
 			hssi_port = <0x0>;
 			monitor_poll_interval = <10>;
@@ -200,27 +212,27 @@
 				full-duplex;
 			};
 
-		dma_0 {
-				reg-names =	"tx_pref"  ,
-						"tx_csr"   ,
-						"tx_fifo"  ,
-						"rx_pref"  ,
-						"rx_csr"   ,
-						"rx_fifo";
-				reg =	<0x25000000 0x00000020>,
-					<0x25000020 0x00000020>,
-					<0x25000040 0x00000020>,
-					<0x25000080 0x00000020>,
-					<0x250000A0 0x00000020>,
-					<0x250000C0 0x00000010>;
-				tx-poll-freq=<128>;
-				rx-poll-freq=<128>;
-				rx-fifo-depth = <0x4000>;
-				tx-fifo-depth = <0x1000>;
-				rx-fifo-almost-full = <0x2000>;
-				rx-fifo-almost-empty = <0x1000>;
-			};
-		};
+            dma_0 {
+                    reg-names =	"tx_pref"  ,
+                            "tx_csr"   ,
+                            "tx_fifo"  ,
+                            "rx_pref"  ,
+                            "rx_csr"   ,
+                            "rx_fifo";
+                    reg =	<0x25000000 0x00000020>,
+                        <0x25000020 0x00000020>,
+                        <0x25000040 0x00000020>,
+                        <0x25000080 0x00000020>,
+                        <0x250000A0 0x00000020>,
+                        <0x250000C0 0x00000010>;
+                    tx-poll-freq=<128>;
+                    rx-poll-freq=<128>;
+                    rx-fifo-depth = <0x4000>;
+                    tx-fifo-depth = <0x1000>;
+                    rx-fifo-almost-full = <0x2000>;
+                    rx-fifo-almost-empty = <0x1000>;
+                };
+            };
 
 		/*
 		 * Current customer FPGA build is single-channel only:
