@@ -479,6 +479,10 @@ static const struct sfp_quirk sfp_quirks[] = {
 	// PHY.
 	SFP_QUIRK_F("FS", "SFP-10G-T", sfp_fixup_fs_10gt),
 
+	// Fiberstore SFP-10G-PC03 is another FS 10GBASE-T module variant with
+	// the same Rollball behavior and startup timing requirements.
+	SFP_QUIRK_F("FS", "SFP-10G-PC03", sfp_fixup_fs_10gt),
+
 	// Fiberstore SFP-2.5G-T uses Rollball protocol to talk to the PHY and
 	// needs 4 sec wait before probing the PHY.
 	SFP_QUIRK_F("FS", "SFP-2.5G-T", sfp_fixup_fs_2_5gt),
@@ -545,6 +549,13 @@ static bool sfp_match(const char *qs, const char *str, size_t len)
 	return !strncmp(qs, str, len);
 }
 
+static const struct sfp_quirk sfp_quirk_fs_10gt_generic = {
+	.vendor = "FS",
+	.part = NULL,
+	.modes = NULL,
+	.fixup = sfp_fixup_fs_10gt,
+};
+
 static const struct sfp_quirk *sfp_lookup_quirk(const struct sfp_eeprom_id *id)
 {
 	const struct sfp_quirk *q;
@@ -558,6 +569,16 @@ static const struct sfp_quirk *sfp_lookup_quirk(const struct sfp_eeprom_id *id)
 		if (sfp_match(q->vendor, id->base.vendor_name, vs) &&
 		    sfp_match(q->part, id->base.vendor_pn, ps))
 			return q;
+
+	/*
+	 * FS ships multiple 10G copper module variants with part numbers that
+	 * may not exactly match the static table entries. Apply the 10G-T fixup
+	 * for known 10G copper naming prefixes.
+	 */
+	if (vs == 2 && !strncmp(id->base.vendor_name, "FS", 2) &&
+	    ((ps >= 9 && !strncmp(id->base.vendor_pn, "SFP-10G-T", 9)) ||
+	     (ps >= 10 && !strncmp(id->base.vendor_pn, "SFP-10G-PC", 10))))
+		return &sfp_quirk_fs_10gt_generic;
 
 	return NULL;
 }
